@@ -191,7 +191,7 @@ def evaluate_verifiers_on_original_tasks(directory="arc_original/training") -> N
         with open(filename, 'r') as fp:
             task = json.load(fp)
         dataset[key] = format_task(task)
-    if 'a8d7556c' in dataset.keys(): fix_bugs(dataset)
+    if 'arc_original' in directory: fix_bugs(dataset)
     failed_on = set()
     for key, verifier in verifiers.items():
         if key not in dataset.keys(): continue
