@@ -87,6 +87,7 @@ def format_task(
     """
     task data type
     """
+    if type(task) == list: return {'train': task}
     return {
         'train': [format_example(example) for example in task['train']],
         'test': [format_example(example) for example in task['test']]

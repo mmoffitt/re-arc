@@ -13,6 +13,7 @@ from utils import *
 
 import generators
 import verifiers
+import sys
 
 
 
@@ -178,23 +179,31 @@ def demo_dataset(
             plot_task(hard)
 
 
-def evaluate_verifiers_on_original_tasks() -> None:
+def evaluate_verifiers_on_original_tasks(directory="arc_original/training") -> None:
     """
     runs the verifiers on the original ARC training tasks
     """
     verifiers = get_verifiers()
     dataset = dict()
     for key in verifiers.keys():
-        with open(f'arc_original/training/{key}.json', 'r') as fp:
+        filename = directory + f'/{key}.json'
+        if not os.path.exists(filename): continue
+        with open(filename, 'r') as fp:
             task = json.load(fp)
         dataset[key] = format_task(task)
-    fix_bugs(dataset)
+    if 'a8d7556c' in dataset.keys(): fix_bugs(dataset)
     failed_on = set()
     for key, verifier in verifiers.items():
+        if key not in dataset.keys(): continue
         task = dataset[key]
         try:
-            for example in task['train'] + task['test']:
-                assert verifier(example['input']) == example['output']
+            examples = task['train']
+            if 'test' in task.keys(): examples = task['train'] + task['test']
+            for example in examples:
+                example_input = tuple(tuple(row) for row in example['input'])
+                verified = [list(row) for row in verifier(example_input)]
+                exampled = [list(row) for row in example['output']]
+                assert verified == exampled
         except:
             failed_on.add(key)
     n = len(dataset)
@@ -202,3 +211,6 @@ def evaluate_verifiers_on_original_tasks() -> None:
     print(f'verification programs work for all examples for {n-k}/{n} tasks')
     print(f'verification fails (on one example) for tasks {failed_on}')
 
+
+if __name__ == "__main__":
+    evaluate_verifiers_on_original_tasks(sys.argv[1])
