@@ -179,9 +179,9 @@ def demo_dataset(
             plot_task(hard)
 
 
-def evaluate_verifiers_on_original_tasks(directory="arc_original/training") -> None:
+def evaluate_verifiers(directory="arc_original/training", debug="") -> None:
     """
-    runs the verifiers on the original ARC training tasks
+    runs the verifiers on a suite of ARC example pairs
     """
     verifiers = get_verifiers()
     dataset = dict()
@@ -203,6 +203,16 @@ def evaluate_verifiers_on_original_tasks(directory="arc_original/training") -> N
                 example_input = tuple(tuple(row) for row in example['input'])
                 verified = [list(row) for row in verifier(example_input)]
                 exampled = [list(row) for row in example['output']]
+                if debug == key and verified != exampled:
+                    print("input:")
+                    for row in example['input']: print(row)
+                    print()
+                    print("output:")
+                    for row in example['output']: print(row)
+                    print()
+                    print("re-arc:")
+                    for row in verifier(example_input): print(row)
+                    print()
                 assert verified == exampled
         except:
             failed_on.add(key)
@@ -213,4 +223,4 @@ def evaluate_verifiers_on_original_tasks(directory="arc_original/training") -> N
 
 
 if __name__ == "__main__":
-    evaluate_verifiers_on_original_tasks(sys.argv[1])
+    evaluate_verifiers(sys.argv[1], "" if len(sys.argv) < 3 else sys.argv[2])
