@@ -195,27 +195,30 @@ def evaluate_verifiers(directory="arc_original/training", debug="") -> None:
     failed_on = set()
     for key, verifier in verifiers.items():
         if key not in dataset.keys(): continue
+        if debug != "_" and debug != key: continue
         task = dataset[key]
-        try:
-            examples = task['train']
-            if 'test' in task.keys(): examples = task['train'] + task['test']
-            for example in examples:
-                example_input = tuple(tuple(row) for row in example['input'])
+        examples = task['train']
+        if 'test' in task.keys(): examples = task['train'] + task['test']
+        for example in examples:
+            example_input = tuple(tuple(row) for row in example['input'])
+            try:
                 verified = [list(row) for row in verifier(example_input)]
-                exampled = [list(row) for row in example['output']]
-                if debug == key and verified != exampled:
-                    print("input:")
-                    for row in example['input']: print(row)
-                    print()
-                    print("output:")
-                    for row in example['output']: print(row)
-                    print()
-                    print("re-arc:")
-                    for row in verifier(example_input): print(row)
-                    print()
-                assert verified == exampled
-        except:
-            failed_on.add(key)
+            except:
+                verified = [[]]
+                failed_on.add(key)
+            exampled = [list(row) for row in example['output']]
+            if debug == key and verified != exampled:
+                print("input:")
+                for row in example['input']: print(row)
+                print()
+                print("output:")
+                for row in example['output']: print(row)
+                print()
+                print("re-arc:")
+                for row in verified: print(row)
+                print()
+            try: assert verified == exampled
+            except: failed_on.add(key)
     n = len(dataset)
     k = len(failed_on)
     print(f'verification programs work for all examples for {n-k}/{n} tasks')
