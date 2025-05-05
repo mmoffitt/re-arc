@@ -179,19 +179,19 @@ def demo_dataset(
             plot_task(hard)
 
 
-def evaluate_verifiers(directory="arc_original/training", debug="") -> None:
+def evaluate_verifiers(indir="arc_original/training", outdir="", debug="") -> None:
     """
     runs the verifiers on a suite of ARC example pairs
     """
     verifiers = get_verifiers()
     dataset = dict()
     for key in verifiers.keys():
-        filename = directory + f'/{key}.json'
+        filename = indir + f'/{key}.json'
         if not os.path.exists(filename): continue
         with open(filename, 'r') as fp:
             task = json.load(fp)
         dataset[key] = format_task(task)
-    if 'arc_original' in directory: fix_bugs(dataset)
+    if 'arc_original' in indir: fix_bugs(dataset)
     failed_on = set()
     for key, verifier in verifiers.items():
         if key not in dataset.keys(): continue
@@ -199,6 +199,8 @@ def evaluate_verifiers(directory="arc_original/training", debug="") -> None:
         task = dataset[key]
         examples = task['train']
         if 'test' in task.keys(): examples = task['train'] + task['test']
+        bad = 0
+        good_examples = []
         for example in examples:
             example_input = tuple(tuple(row) for row in example['input'])
             try:
@@ -207,7 +209,9 @@ def evaluate_verifiers(directory="arc_original/training", debug="") -> None:
                 verified = [[]]
                 failed_on.add(key)
             exampled = [list(row) for row in example['output']]
-            if debug == key and verified != exampled:
+            if verified == exampled:
+                good_examples.append(example)
+            elif debug == key:
                 print("input:")
                 for row in example['input']: print(row)
                 print()
@@ -218,7 +222,13 @@ def evaluate_verifiers(directory="arc_original/training", debug="") -> None:
                 for row in verified: print(row)
                 print()
             try: assert verified == exampled
-            except: failed_on.add(key)
+            except:
+                failed_on.add(key)
+                bad += 1
+        print(key + ": " + str(bad))
+        if not outdir: continue
+        with open(outdir + "/" + key + ".json", 'w') as fp:
+            json.dump(good_examples, fp)
     n = len(dataset)
     k = len(failed_on)
     print(f'verification programs work for all examples for {n-k}/{n} tasks')
@@ -226,4 +236,4 @@ def evaluate_verifiers(directory="arc_original/training", debug="") -> None:
 
 
 if __name__ == "__main__":
-    evaluate_verifiers(sys.argv[1], "" if len(sys.argv) < 3 else sys.argv[2])
+    evaluate_verifiers(sys.argv[1], "verified", "" if len(sys.argv) < 3 else sys.argv[2])
