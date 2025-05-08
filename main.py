@@ -179,7 +179,7 @@ def demo_dataset(
             plot_task(hard)
 
 
-def evaluate_verifiers(indir="arc_original/training", outdir="", debug="") -> None:
+def evaluate_verifiers(indir="arc_original/training", outdir="") -> None:
     """
     runs the verifiers on a suite of ARC example pairs
     """
@@ -194,8 +194,11 @@ def evaluate_verifiers(indir="arc_original/training", outdir="", debug="") -> No
     if 'arc_original' in indir: fix_bugs(dataset)
     failed_on = set()
     for key, verifier in verifiers.items():
-        if key not in dataset.keys(): continue
-        if debug != "_" and debug != key: continue
+        print('Testing task ' + key + ' ... ', end='')
+        if key not in dataset.keys():
+            print('[missing]')
+            failed_on.add(key)
+            continue
         task = dataset[key]
         examples = task['train']
         if 'test' in task.keys(): examples = task['train'] + task['test']
@@ -211,7 +214,7 @@ def evaluate_verifiers(indir="arc_original/training", outdir="", debug="") -> No
             exampled = [list(row) for row in example['output']]
             if verified == exampled:
                 good_examples.append(example)
-            elif debug == key:
+            elif False:  # debug == key:
                 print("input:")
                 for row in example['input']: print(row)
                 print()
@@ -225,15 +228,15 @@ def evaluate_verifiers(indir="arc_original/training", outdir="", debug="") -> No
             except:
                 failed_on.add(key)
                 bad += 1
-        print(key + ": " + str(bad))
+        print("pass" if not bad else "FAIL")
         if not outdir: continue
         with open(outdir + "/" + key + ".json", 'w') as fp:
             json.dump(good_examples, fp)
-    n = len(dataset)
+    n = len(verifiers)
     k = len(failed_on)
-    print(f'verification programs work for all examples for {n-k}/{n} tasks')
-    print(f'verification fails (on one example) for tasks {failed_on}')
+    print(f'verification programs work for all examples for {n-k}/{n} tasks (' + str(100*(n-k)/n) + '%)')
+    # print(f'verification fails (on one example) for tasks {failed_on}')
 
 
 if __name__ == "__main__":
-    evaluate_verifiers(sys.argv[1], "verified", "" if len(sys.argv) < 3 else sys.argv[2])
+    evaluate_verifiers(sys.argv[1], "")
