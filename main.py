@@ -239,4 +239,4 @@ def evaluate_verifiers(indir="arc_original/training", outdir="") -> None:
 
 
 if __name__ == "__main__":
-    evaluate_verifiers(sys.argv[1], "")
+    evaluate_verifiers(sys.argv[1], "verified")
